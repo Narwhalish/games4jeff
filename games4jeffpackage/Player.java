@@ -1,4 +1,4 @@
-package games4jeffpackage;
+
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -33,8 +33,8 @@ public class Player extends GameThing{
 
 	public void tick() {
 		//if not already specified, have these statements in each moving object's class
-		x += velX;
-		y += velY;
+		x += velX*screen.getSpeedMod();
+		y += velY*screen.getSpeedMod();
 
 		//iterating through all objects in the handler is often used
 		for(int i = 0; i < handler.stuff.size(); i++){
@@ -44,7 +44,7 @@ public class Player extends GameThing{
 			//note all pickups (weapons/powerups) are initialized with an ID "Pickup.name"
 			//similarly, enemies have an ID of "Enemy.name"
 			if (thing.getId().length() >= 6 && thing.getId().substring(0,6).equals("Pickup")){
-				if (getBounds().intersects(thing.getBounds())){
+				if (getBounds().intersects(thing.getBounds()) && ((Pickup)thing).isPickupable()){
 					try {
 						screen.addWeapon((Weapon)thing); //add weapon to inventory if it's a weapon
 						handler.removeObject(thing);
@@ -62,8 +62,24 @@ public class Player extends GameThing{
 							screen.notifyPowerup(((Powerup)thing).getName()); //send powerup that is picked up to screen
 							handler.removeObject(thing);
 						} catch (Exception e2){
-							System.out.println("oops something happened");
-							e2.printStackTrace();
+							try {
+                if (((CoreItem)thing).getName().equals("heart") && hp < 100){
+                  setHp(hp+10);
+                  handler.removeObject(thing);
+                }
+                if (((CoreItem)thing).getName().equals("chest")){
+                  int chance = (int)(Math.random()*100)+1;
+                  String weapon = main.chooseWeapon();
+                  String powerup = main.choosePowerup();
+                  if (chance <= 10) handler.addObject(new Weapon(thing.getX(), thing.getY(), weapon));
+                  else if (chance <= 20) handler.addObject(new Powerup(thing.getX(), thing.getY(), powerup, handler, screen));
+                  else handler.addObject(new CoreItem(thing.getX(), thing.getY(), "heart"));
+                  handler.removeObject(thing);
+                }
+              } catch (Exception e3){
+                System.out.println("oops something happened");
+  							e3.printStackTrace();
+              }
 						}
 					}
 				}
@@ -76,7 +92,7 @@ public class Player extends GameThing{
 					thing.getId().equals("Enemy.Bumbler")){
 				if (getBounds().intersects(thing.getBounds())){
 					if (iTimer == 0) {
-						hp-=10;
+						hp-=10/screen.getDefenseMod();
 						iTimer = iFrames; //set the player to an invincible state for a short while
 					}
 				}
@@ -86,7 +102,7 @@ public class Player extends GameThing{
 			if (thing.getId().equals("EnemyShot")){
 				if (getBounds().intersects(thing.getBounds())){
 					if (iTimer == 0) {
-						hp -= ((EnemyShot)thing).getDamage();
+						hp -= ((EnemyShot)thing).getDamage()/screen.getDefenseMod();
 						iTimer = iFrames; //set the player to an invincible state for a short while
 					}
 					handler.removeObject(thing);
@@ -97,7 +113,7 @@ public class Player extends GameThing{
 			if (thing.getId().equals("TrackingShot")){
 				if (getBounds().intersects(thing.getBounds())){
 					if (iTimer == 0) {
-						hp -= ((TrackingShot)thing).getDamage();
+						hp -= ((TrackingShot)thing).getDamage()/screen.getDefenseMod();
 						iTimer = iFrames; //set the player to an invincible state for a short while
 					}
 					handler.removeObject(thing);
@@ -179,6 +195,7 @@ public class Player extends GameThing{
 
 		//remove player when hp is less than or equal to zero
 		if (hp <= 0){
+		    screen.setDeathFlag(true);
 			handler.removeObject(this);
 		}
 
@@ -199,7 +216,7 @@ public class Player extends GameThing{
 			BufferedImage weaponImage = tex.blank_weapon[screen.getWeapon().getType()]; //get image of current weapon
 			float angle = screen.getAngle();
 			g2d.rotate(angle, x + width/2, y + height/2 + 10); //rotate the gun
-			if (angle > Math.PI/2 && angle < 3*Math.PI/2 //flip image if passes the vertical line
+			if (angle > Math.PI/2 && angle < 3*Math.PI/2){ //flip image if passes the vertical line
 				g2d.drawImage(weaponImage, (int)x+10, (int)y+ weaponImage.getHeight()+20, weaponImage.getWidth(), -weaponImage.getHeight(), null);
 			}
 			else {

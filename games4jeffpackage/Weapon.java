@@ -1,4 +1,4 @@
-package games4jeffpackage;
+
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -16,11 +16,10 @@ public class Weapon extends Pickup {
   private String fireType; //semi-auto or auto
   private int range; //how far the bullet travels
   private int shotsFired = 1; //bullets fired every time shot
-  private String name; //name of weapon
+  private String weaponClass = ""; //handles specific types of weapons (i.e. burst, grenade launcher)
 
   public Weapon (float x, float y, String id){
     super(x, y, id);
-    name = this.id.substring(7); //gets rid of start of id which is "Pickup."
     makeWeapons(); //set qualities of each weapon
   }
 
@@ -102,6 +101,14 @@ public class Weapon extends Pickup {
 
   public void setRange(int range){
     this.range = range;
+  }
+
+  public String getWeaponClass(){
+    return weaponClass;
+  }
+
+  public void setWeaponClass(String weaponClass){
+    this.weaponClass = weaponClass;
   }
 
   /*
@@ -227,14 +234,32 @@ public class Weapon extends Pickup {
       reloadTime = 100;
       inaccuracy = 150;
       fireType = "auto";
-      shotsFired = 10;
+      shotsFired = 6;
       range = 10;
     }
+    if (name.equals("grenade launcher")){
+      fireDelay = 50;
+      shotSpeed = 5;
+      damage = 10;
+      magazine = 7;
+      reloadTime = 200;
+      inaccuracy = 30;
+      fireType = "semi-auto";
+      range = 50;
+      weaponClass = "grenade launcher";
+    }
+    if (name.equals("rainmaker")){
+      fireDelay = 25;
+      shotSpeed = 5;
+      damage = 5;
+      magazine = 10;
+      reloadTime = 175;
+      inaccuracy = 50;
+      fireType = "auto";
+      range = 75;
+      weaponClass = "grenade launcher";
+    }
     ammo = magazine;
-  }
-
-  public String getName(){
-    return name;
   }
 
   public void render(Graphics g){

@@ -1,4 +1,4 @@
-package games4jeffpackage;
+
 
 import java.awt.Canvas;
 import java.awt.Color;
@@ -21,26 +21,28 @@ public class Main extends Canvas implements Runnable{
 	private BufferedImage level = null;
 	private BufferedImageLoader loader = new BufferedImageLoader();
 	private ArrayList <RoomPoint> points = new ArrayList <RoomPoint> ();
-  private ArrayList <Vector> vectors = new ArrayList <Vector> ();
+    private ArrayList <Vector> vectors = new ArrayList <Vector> ();
 	private Camera cam;
 	private Player player;
 	public static Texture tex;
 	private Graphics g;
 	private Graphics2D g2d;
 	private String state = "menu";
-	private int numWeapons = 10;
-	private int numPowerups = 2;
+	private int numWeapons = 12;
+	private int numPowerups = 6;
 	private boolean levelCleared = false;
 	private int w;
 	private int h;
 	private int currentLevel;
 	private int itemRoomIndex = 0;
 	private Window window;
-	private int numRooms = 58;
+	private int numRooms = 62;
+	public static Sound sound;
 
 	/*instantiate all variables and stuff and run all level creation stuff*/
 	public Main(){
 		tex = new Texture(); //get static variable for textures
+		sound = new Sound();
 
 		handler = new Handler(); //create handler which contains a list that manages most game items
 
@@ -49,14 +51,13 @@ public class Main extends Canvas implements Runnable{
 		window = new Window(WIDTH,HEIGHT,"jeff",this); //create a new window called "jeff"
 
 		screen = new Screen(handler, this, cam); //create a new screen variable (handles mouse input, gui, and weapon handling)
-		this.addKeyListener(new KeyInput(handler, screen)); //adds a listener of key input
+		this.addKeyListener(new KeyInput(handler, screen, this)); //adds a listener of key input
 		this.addMouseListener(screen); //add listener of mouse input
 
 		player = new Player(400,400,"Player", 0, handler, this, screen); //create player and spawn in first room
 		handler.addObject(player); //add player to the list of objects
 
-		Sound s = new Sound(); //instantiate sounds
-		Sound.loop("background", 0.1); //start the background music
+		sound.loop("background"); //start the background music
 
 		generateMap(); //start map generation
 	}
@@ -115,7 +116,7 @@ public class Main extends Canvas implements Runnable{
 
 	/*calls tick method on different parts of the game*/
 	public void tick(){
-		if (!state.equals("menu")) { //if not in the menu screen
+		if (!state.equals("menu") && !state.equals("pause")) { //if not in the menu screen
 			if (cam != null){
 				handler.tick(cam); //runs the tick method on objects in the game
 			}
@@ -125,8 +126,9 @@ public class Main extends Canvas implements Runnable{
 					cam.tick(thing); //tick the camera after passing the player object into the camera class
 				}
 			}
+			screen.tick(); //tick the screen
 		}
-		screen.tick(); //tick the screen
+
 		window.tick(); //tick the window (doesn't do much outside of displaying the cursor)
 	}
 
@@ -141,10 +143,10 @@ public class Main extends Canvas implements Runnable{
 		g2d = (Graphics2D)g;
 
 		//set background color based on level
-		if (state.equals("1")) g.setColor(new Color(239, 172, 117));
-		if (state.equals("2")) g.setColor(new Color(61, 61, 61));
-		if (state.equals("3")) g.setColor(new Color(178, 120, 76));
-		if (state.equals("4")) g.setColor(new Color(212, 244, 244));
+		if (state.equals("1") || currentLevel == 1) g.setColor(new Color(239, 172, 117));
+		if (state.equals("2") || currentLevel == 2) g.setColor(new Color(61, 61, 61));
+		if (state.equals("3") || currentLevel == 3) g.setColor(new Color(104, 81, 53));
+		if (state.equals("4") || currentLevel == 4) g.setColor(new Color(73, 142, 163));
 		g.fillRect(0, 0, WIDTH, HEIGHT);
 
 		if (!state.equals("menu")) {
@@ -208,7 +210,7 @@ public class Main extends Canvas implements Runnable{
 							multiplied by the in-game distance of the pixels (33/32),
 							and added to the change in x or y of the room (dx/dy),
 							multiplied by the size of each room (WIDTH/HEIGHT).
-							then the objects ID ("BLOCK", usually name of the class),
+							then the objects ID ("Block", usually name of the class),
 							and in this case the type of block and the currentLevel.
 							many objects require certain variables outside of the position and ID,
 							(often the main class, handler, or screen) because they will be
@@ -224,7 +226,7 @@ public class Main extends Canvas implements Runnable{
 						else if (enemyChoice == 3) handler.addObject(new TrackingShooter(xx*33 + WIDTH*dx + 5, yy*32 + HEIGHT*dy + 5, "TrackingShooter", handler, screen));
 						else if (enemyChoice == 4) handler.addObject(new Shooter(xx*33 + WIDTH*dx + 5, yy*32 + HEIGHT*dy + 5, "Shooter", handler, screen));
 						else if (enemyChoice == 5) handler.addObject(new Bumbler(xx*33 + WIDTH*dx + 5, yy*32 + HEIGHT*dy + 5, "Bumbler", handler, screen));
-						else handler.addObject(new Chicken(xx*33 + WIDTH*dx + 5, yy*32 + HEIGHT*dy + 5, "Chicken", handler));
+						else handler.addObject(new Chicken(xx*33 + WIDTH*dx + 5, yy*32 + HEIGHT*dy + 5, "Chicken", handler, screen));
 					}
 					/*
 						adds an enemy based on the green value to represent somewhat
@@ -247,7 +249,7 @@ public class Main extends Canvas implements Runnable{
 						handler.addObject(new Bumbler(xx*33 + WIDTH*dx + 5, yy*32 + HEIGHT*dy + 5, "Bumbler", handler, screen));
 					}
 					if (red == 255 && green == 6 && blue == 0){
-						handler.addObject(new Chicken(xx*33 + WIDTH*dx + 5, yy*32 + HEIGHT*dy + 5, "Chicken", handler));
+						handler.addObject(new Chicken(xx*33 + WIDTH*dx + 5, yy*32 + HEIGHT*dy + 5, "Chicken", handler, screen));
 					}
 					if (red == 255 && green == 255 && blue == 0){
 						handler.addObject(new Boss(xx*33 + WIDTH*dx, yy*32 + HEIGHT*dy, "Boss", handler, screen));
@@ -325,30 +327,37 @@ public class Main extends Canvas implements Runnable{
 	}
 
 	/*returns a random weapon name*/
-	private String chooseWeapon(){
+	public String chooseWeapon(){
 		int weaponChoice = (int)(Math.random()*numWeapons);
-		System.out.println(weaponChoice);
-		String weapon = "";
-		if (weaponChoice == 0) weapon = "smg";
-		else if (weaponChoice == 1) weapon = "sniper";
-		else if (weaponChoice == 2) weapon = "assault rifle";
-		else if (weaponChoice == 3) weapon = "DMR";
-		else if (weaponChoice == 4) weapon = "slugshot";
-		else if (weaponChoice == 5) weapon = "minigun";
-		else if (weaponChoice == 6) weapon = "revolver";
-		else if (weaponChoice == 7) weapon = "pump shotgun";
-		else if (weaponChoice == 8) weapon = "tac shotgun";
-		else if (weaponChoice == 9) weapon = "mauler";
-		return weapon;
+		switch(weaponChoice){
+    		case 0: return "smg";
+    		case 1: return "sniper";
+    		case 2: return "assault rifle";
+    		case 3: return "DMR";
+    		case 4: return "slugshot";
+    		case 5: return "minigun";
+    		case 6: return "revolver";
+    		case 7: return "pump shotgun";
+    		case 8: return "tac shotgun";
+    		case 9: return "mauler";
+        case 10: return "grenade launcher";
+				case 11: return "rainmaker";
+        default: return "";
+      }
 	}
 
 	/*returns a random powerup name*/
-	private String choosePowerup(){
+	public String choosePowerup(){
 		int powerupChoice = (int)(Math.random()*numPowerups);
-		String powerup = "";
-		if (powerupChoice == 0) powerup = "health pack";
-		else if (powerupChoice == 1) powerup = "damage boost";
-		return powerup;
+		switch(powerupChoice){
+       		case 0: return "health pack";
+       		case 1: return "damage boost";
+       		case 2: return "speed boost";
+       		case 3: return "defense boost";
+        	case 4: return "fire rate boost";
+        	case 5: return "accuracy boost";
+        	default: return "";
+        }
 	}
 
 	/*
@@ -537,9 +546,15 @@ public class Main extends Canvas implements Runnable{
 	/*takes in numerical value, plays according sound*/
 	public void changeMusic(int level){
 		if (level == 2){
-			Sound.loop("background2", 0.1);
+			sound.loop("background2");
 		}
-		else Sound.loop("background", 0.1);
+		else if (level == 3){
+			sound.loop("background3");
+		}
+		else if (level == 4){
+			sound.loop("background4");
+		}
+		else sound.loop("background");
 	}
 
 	public int getItemRoomIndex(){
@@ -549,6 +564,25 @@ public class Main extends Canvas implements Runnable{
 	public static void main(String [] args){
 		new Main();
 		//nothing else should go here
+	}
+
+	public int getNumWeapons(){
+		return numWeapons;
+	}
+
+	public int getNumPowerups(){
+		return numPowerups;
+	}
+
+	public static Sound getSound(){
+		return sound;
+	}
+
+	public void togglePause(){
+		if (!state.equals("menu")){
+			if (state.equals("pause")) state = currentLevel+"";
+			else state = "pause";
+		}
 	}
 
 }

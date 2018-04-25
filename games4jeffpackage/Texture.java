@@ -1,10 +1,10 @@
-package games4jeffpackage;
+
 
 import java.awt.image.BufferedImage;
 
 public class Texture {
   //inititalizes spritesheet classes
-  private SpriteSheet ps, bs, es, ws, bws, pus;
+  private SpriteSheet ps, bs, es, ws, bws, pus, cs, ss;
 
   //initializes spritesheet images
   private BufferedImage player_sheet = null;
@@ -13,14 +13,18 @@ public class Texture {
   private BufferedImage weapon_sheet = null;
   private BufferedImage blank_weapon_sheet = null;
   private BufferedImage powerup_sheet = null;
+  private BufferedImage core_item_sheet = null;
+  private BufferedImage sound_button_sheet = null;
 
   //initialize image lists
   public BufferedImage[] player = new BufferedImage[4];
   public BufferedImage[] block = new BufferedImage[16];
   public BufferedImage[] enemy = new BufferedImage[8];
-  public BufferedImage[] weapon = new BufferedImage[11];
-  public BufferedImage[] blank_weapon = new BufferedImage[11];
-  public BufferedImage[] powerup = new BufferedImage[2];
+  public BufferedImage[] weapon = new BufferedImage[13];
+  public BufferedImage[] blank_weapon = new BufferedImage[13];
+  public BufferedImage[] powerup = new BufferedImage[6];
+  public BufferedImage[] core_item = new BufferedImage[2];
+  public BufferedImage[] sound_button = new BufferedImage[4];
 
   public Texture(){
     BufferedImageLoader loader = new BufferedImageLoader();
@@ -32,6 +36,8 @@ public class Texture {
       weapon_sheet = loader.loadImage("assets/weapon_sheet.png");
       blank_weapon_sheet = loader.loadImage("assets/blank_weapon_sheet.png");
       powerup_sheet = loader.loadImage("assets/powerup_sheet.png");
+      core_item_sheet = loader.loadImage("assets/core_item_sheet.png");
+      sound_button_sheet = loader.loadImage("assets/sound_button_sheet.png");
     }catch (Exception e){
       e.printStackTrace();
     }
@@ -42,33 +48,21 @@ public class Texture {
     ws = new SpriteSheet(weapon_sheet);
     bws = new SpriteSheet(blank_weapon_sheet);
     pus = new SpriteSheet(powerup_sheet);
+    cs = new SpriteSheet(core_item_sheet);
+    ss = new SpriteSheet(sound_button_sheet);
 
     getTextures(); //initializes lists of images
   }
 
   /*gets subimages of spritesheet and adds them to a list of textures */
   private void getTextures(){
-    player[0] = ps.grabImage(1, 1, 32, 32); //right view
-    player[1] = ps.grabImage(2, 1, 32, 32); //front view
-    player[2] = ps.grabImage(3, 1, 32, 32); //left view
-    player[3] = ps.grabImage(4, 1, 32, 32); //back view
+    for(int i = 0; i < player.length; i++){
+        player[i] = ps.grabImage(i+1, 1, 32, 32);
+    }
 
-    block[0] = bs.grabImage(1, 1, 33, 32); //brown 1
-    block[1] = bs.grabImage(2, 1, 33, 32); //brown 2
-    block[2] = bs.grabImage(3, 1, 33, 32); //brown 3
-    block[3] = bs.grabImage(4, 1, 33, 32); //brown 4
-    block[4] = bs.grabImage(1, 2, 33, 32); //grey 1
-    block[5] = bs.grabImage(2, 2, 33, 32); //grey 2
-    block[6] = bs.grabImage(3, 2, 33, 32); //grey 3
-    block[7] = bs.grabImage(4, 2, 33, 32); //grey 4
-    block[8] = bs.grabImage(1, 3, 33, 32); //jungle 1
-    block[9] = bs.grabImage(2, 3, 33, 32); //jungle 2
-    block[10] = bs.grabImage(3, 3, 33, 32); //jungle 3
-    block[11] = bs.grabImage(4, 3, 33, 32); //jungle 4
-    block[12] = bs.grabImage(1, 4, 33, 32); //ice 1
-    block[13] = bs.grabImage(2, 4, 33, 32); //ice 2
-    block[14] = bs.grabImage(3, 4, 33, 32); //ice 3
-    block[15] = bs.grabImage(4, 4, 33, 32); //ice 4
+    for(int i = 0; i < block.length; i++){
+        block[i] = bs.grabImage(1+i%4, 1+i/4, 33, 32);
+    }
 
     enemy[0] = es.grabImage(1, 1, 28, 28); //look right
     enemy[1] = es.grabImage(2, 1, 28, 28); //look left
@@ -79,31 +73,23 @@ public class Texture {
     enemy[6] = es.grabImage(1, 6, 28, 28, 24, 24); //chicken left
     enemy[7] = es.grabImage(2, 6, 28, 28, 24, 24); //chicken right
 
-    weapon[0] = ws.grabImage(1, 1, 24, 24); //pistol
-    weapon[1] = ws.grabImage(2, 1, 24, 24); //smg
-    weapon[2] = ws.grabImage(3, 1, 24, 24); //sniper
-    weapon[3] = ws.grabImage(4, 1, 24, 24); //assault rifle
-    weapon[4] = ws.grabImage(5, 1, 24, 24); //dmr
-    weapon[5] = ws.grabImage(1, 2, 24, 24); //slugshot
-    weapon[6] = ws.grabImage(2, 2, 24, 24); //minigun
-    weapon[7] = ws.grabImage(3, 2, 24, 24); //revolver
-    weapon[8] = ws.grabImage(4, 2, 24, 24); //pump shotgun
-    weapon[9] = ws.grabImage(5, 2, 24, 24); //tac shotgun
-    weapon[10] = ws.grabImage(1, 3, 24, 24); //mauler
+    for(int i = 0; i < weapon.length; i++){
+        weapon[i] = ws.grabImage(1+i%5, 1+i/5, 24, 24);
+    }
 
-    blank_weapon[0] = bws.grabImage(1, 1, 24, 24); //pistol
-    blank_weapon[1] = bws.grabImage(2, 1, 24, 24); //smg
-    blank_weapon[2] = bws.grabImage(3, 1, 24, 24); //sniper
-    blank_weapon[3] = bws.grabImage(4, 1, 24, 24); //assault rifle
-    blank_weapon[4] = bws.grabImage(5, 1, 24, 24); //dmr
-    blank_weapon[5] = bws.grabImage(1, 2, 24, 24); //slugshot
-    blank_weapon[6] = bws.grabImage(2, 2, 24, 24); //minigun
-    blank_weapon[7] = bws.grabImage(3, 2, 24, 24); //revolver
-    blank_weapon[8] = bws.grabImage(4, 2, 24, 24); //pump shotgun
-    blank_weapon[9] = bws.grabImage(5, 2, 24, 24); //tac shotgun
-    blank_weapon[10] = bws.grabImage(1, 3, 24, 24); //mauler
+    for(int i = 0; i < blank_weapon.length; i++){
+        blank_weapon[i] = bws.grabImage(1+i%5, 1+i/5, 24, 24);
+    }
 
-    powerup[0] = pus.grabImage(1, 1, 24, 24); //health pack
-    powerup[1] = pus.grabImage(2, 1, 24, 24); //damage boost
+    for(int i = 0; i < powerup.length; i++){
+        powerup[i] = pus.grabImage(1+i%5, 1+i/5, 24, 24);
+    }
+
+    core_item[0] = cs.grabImage(1, 1, 24, 24);
+    core_item[1] = cs.grabImage(2, 1, 24, 24);
+
+    for (int i = 0; i < sound_button.length; i++){
+      sound_button[i] = ss.grabImage(1+i%2, 1+i/2, 24, 24);
+    }
   }
 }
